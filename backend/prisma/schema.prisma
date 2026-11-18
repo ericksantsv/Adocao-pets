@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// SQLite não tem enums nativos de forma portável: tipo e status são Strings
+// validadas por Zod/Services (ver src/lib/constants.ts).
+
+model Instituicao {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  cnpj      String   @unique
+  email     String   @unique
+  senha     String
+  telefone  String?
+  endereco  String?
+  cidade    String?
+  criadoEm  DateTime @default(now()) @map("criado_em")
+  animais   Animal[]
+
+  @@map("instituicao")
+}
+
+model Animal {
+  id             Int            @id @default(autoincrement())
+  tipo           String         @default("CAO")
+  nome           String
+  raca           String
+  dataNascimento DateTime       @map("data_nascimento")
+  detalhes       String?
+  foto           String?
+  idInstituicao  Int            @map("id_instituicao")
+  criadoEm       DateTime       @default(now()) @map("criado_em")
+  instituicao    Instituicao    @relation(fields: [idInstituicao], references: [id], onDelete: Cascade)
+  vacinas        AnimalVacina[]
+  matches        Match[]
+
+  @@map("animal")
+}
+
+model Vacina {
+  id      Int            @id @default(autoincrement())
+  nome    String         @unique
+  animais AnimalVacina[]
+
+  @@map("vacina")
+}
+
+model AnimalVacina {
+  idAnimal      Int      @map("id_animal")
+  idVacina      Int      @map("id_vacina")
+  dataAplicacao DateTime @map("data_aplicacao")
+  animal        Animal   @relation(fields: [idAnimal], references: [id], onDelete: Cascade)
+  vacina        Vacina   @relation(fields: [idVacina], references: [id], onDelete: Cascade)
+
+  @@id([idAnimal, idVacina])
+  @@map("animal_vacina")
+}
+
+model Adotante {
+  id         Int      @id @default(autoincrement())
+  nome       String
+  cpf        String   @unique
+  email      String   @unique
+  senha      String
+  telefone   String?
+  possuiPets Boolean  @default(false) @map("possui_pets")
+  qtdPets    Int      @default(0) @map("qtd_pets")
+  criadoEm   DateTime @default(now()) @map("criado_em")
+  matches    Match[]
+
+  @@map("adotante")
+}
+
+// status: PENDENTE | EM_ANDAMENTO | APROVADO | CANCELADO
+model Match {
+  id            Int       @id @default(autoincrement())
+  idAnimal      Int       @map("id_animal")
+  idAdotante    Int       @map("id_adotante")
+  status        String    @default("PENDENTE")
+  dataVisita    DateTime? @map("data_visita")
+  observacoes   String?
+  criadoEm      DateTime  @default(now()) @map("criado_em")
+  atualizadoEm  DateTime  @updatedAt @map("atualizado_em")
+  animal        Animal    @relation(fields: [idAnimal], references: [id], onDelete: Cascade)
+  adotante      Adotante  @relation(fields: [idAdotante], references: [id], onDelete: Cascade)
+
+  @@index([idAnimal, status])
+  @@map("match")
+}

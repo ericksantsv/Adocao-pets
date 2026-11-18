@@ -1,0 +1,87 @@
+### Coleção de requisições (VS Code "REST Client"; também importável no Insomnia/Bruno).
+### Rode antes: npx prisma db seed
+
+@host = http://localhost:3333
+
+### 1) Login da instituição (seed)
+# @name loginInst
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{ "role": "INSTITUICAO", "email": "abrigo@exemplo.com", "senha": "123456" }
+
+###
+@tokenInst = {{loginInst.response.body.token}}
+
+### 2) Login do adotante (seed)
+# @name loginAdot
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{ "role": "ADOTANTE", "email": "adotante@exemplo.com", "senha": "123456" }
+
+###
+@tokenAdot = {{loginAdot.response.body.token}}
+
+### 3) Listar cães disponíveis (público)
+GET {{host}}/animais
+
+### 4) Detalhe do cão 1
+GET {{host}}/animais/1
+
+### 5) Cadastrar cão (INSTITUICAO)
+POST {{host}}/animais
+Authorization: Bearer {{tokenInst}}
+Content-Type: application/json
+
+{ "nome": "Mel", "raca": "Poodle", "dataNascimento": "2022-05-10", "detalhes": "Muito dócil" }
+
+### 6) Registrar vacina aplicada (INSTITUICAO)
+POST {{host}}/animais/1/vacinas
+Authorization: Bearer {{tokenInst}}
+Content-Type: application/json
+
+{ "vacinaId": 3, "dataAplicacao": "2025-01-15" }
+
+### 7) Solicitar match (ADOTANTE)
+POST {{host}}/matches
+Authorization: Bearer {{tokenAdot}}
+Content-Type: application/json
+
+{ "animalId": 1, "observacoes": "Tenho quintal grande" }
+
+### 8) Meus pedidos (ADOTANTE)
+GET {{host}}/matches/meus
+Authorization: Bearer {{tokenAdot}}
+
+### 9) Pedidos recebidos (INSTITUICAO)
+GET {{host}}/matches/instituicao
+Authorization: Bearer {{tokenInst}}
+
+### 10) Aprovar match 1 (INSTITUICAO) -> 200
+PATCH {{host}}/matches/1/status
+Authorization: Bearer {{tokenInst}}
+Content-Type: application/json
+
+{ "status": "APROVADO" }
+
+### ---- Cenários de erro ----
+
+### E1) Sem token -> 401
+GET {{host}}/matches/meus
+
+### E2) ADOTANTE tentando cadastrar cão -> 403
+POST {{host}}/animais
+Authorization: Bearer {{tokenAdot}}
+Content-Type: application/json
+
+{ "nome": "Hack", "raca": "X", "dataNascimento": "2020-01-01" }
+
+### E3) Aprovar 2º match do mesmo cão -> 409 (RN04)
+# (crie um 2º adotante, solicite o mesmo cão e tente aprovar)
+
+### E4) RN06 -> 422
+POST {{host}}/auth/register/adotante
+Content-Type: application/json
+
+{ "nome": "Teste", "cpf": "529.982.247-25", "email": "t@t.com", "senha": "123456", "possuiPets": false, "qtdPets": 3 }
