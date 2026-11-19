@@ -17,6 +17,10 @@ export const authController = {
         ? await authService.updateAdotante(uid(req), req.body)
         : await authService.updateInstituicao(uid(req), req.body),
     ),
+  deleteAccount: async (req: Request, res: Response) => {
+    await authService.deleteAccount(uid(req), req.user!.role);
+    res.status(204).send();
+  },
 };
 
 export const animalController = {

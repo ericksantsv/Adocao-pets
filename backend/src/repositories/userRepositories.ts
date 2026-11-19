@@ -7,6 +7,7 @@ export const instituicaoRepository = {
   findByEmail: (email: string) => prisma.instituicao.findUnique({ where: { email } }),
   findByCnpj: (cnpj: string) => prisma.instituicao.findUnique({ where: { cnpj } }),
   update: (id: number, data: Prisma.InstituicaoUpdateInput) => prisma.instituicao.update({ where: { id }, data }),
+  delete: (id: number) => prisma.instituicao.delete({ where: { id } }), // <-- Adicionado aqui
 };
 
 export const adotanteRepository = {
@@ -15,4 +16,5 @@ export const adotanteRepository = {
   findByEmail: (email: string) => prisma.adotante.findUnique({ where: { email } }),
   findByCpf: (cpf: string) => prisma.adotante.findUnique({ where: { cpf } }),
   update: (id: number, data: Prisma.AdotanteUpdateInput) => prisma.adotante.update({ where: { id }, data }),
+  delete: (id: number) => prisma.adotante.delete({ where: { id } }), // <-- Adicionado aqui
 };

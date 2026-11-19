@@ -29,6 +29,8 @@ async function assertEmailFree(email: string) {
   }
 }
 
+
+
 export const authService = {
   async registerAdotante(input: z.infer<typeof registerAdotanteSchema>) {
     assertPetsCoherent(input.possuiPets, input.qtdPets);
@@ -43,6 +45,13 @@ export const authService = {
     if (await instituicaoRepository.findByCnpj(input.cnpj)) throw new AppError(409, 'CNPJ já cadastrado.');
     const user = await instituicaoRepository.create({ ...input, senha: await hash(input.senha) });
     return { token: sign(user.id, 'INSTITUICAO'), role: 'INSTITUICAO' as const, user: strip(user) };
+  }, async deleteAccount(id: number, role: Role) {
+    if (role === 'ADOTANTE') {
+      await adotanteRepository.delete(id);
+    } else {
+      await instituicaoRepository.delete(id);
+    }
+    return { success: true };
   },
 
   async login({ role, email, senha }: z.infer<typeof loginSchema>) {

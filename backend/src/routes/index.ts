@@ -25,6 +25,7 @@ routes.put('/perfil', authenticate, (req, res, next) => {
   const schema = req.user!.role === 'ADOTANTE' ? s.updateAdotanteSchema : s.updateInstituicaoSchema;
   validate({ body: schema })(req, res, next);
 }, authController.updateMe);
+routes.delete('/perfil', authenticate, authController.deleteAccount);
 
 // Vacinas
 routes.get('/vacinas', animalController.listVacinas);
