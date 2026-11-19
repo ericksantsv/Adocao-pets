@@ -1,12 +1,14 @@
 import { useState, type FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import type { Role, User } from '../types';
 
 export function Profile() {
-  const { user, role, setUser } = useAuth();
+  const { user, role, setUser, logout } = useAuth();
   const { notify } = useToast();
+  const navigate = useNavigate();
   const [f, setF] = useState({
     nome: user!.nome,
     telefone: user!.telefone ?? '',
@@ -38,6 +40,20 @@ export function Profile() {
     }
   }
 
+  async function handleDeleteAccount() {
+    if (!confirm('Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita e todos os seus dados serão removidos.')) return;
+    setBusy(true);
+    try {
+      await api('/perfil', { method: 'DELETE' });
+      logout();
+      notify('success', 'Conta excluída com sucesso.');
+      navigate('/', { replace: true });
+    } catch (err) {
+      notify('error', (err as Error).message);
+      setBusy(false);
+    }
+  }
+
   return (
     <form className="form panel" onSubmit={submit}>
       <h2>Meu perfil <span className="badge PENDENTE">{role === 'ADOTANTE' ? 'Adotante' : 'Instituição'}</span></h2>
@@ -58,6 +74,18 @@ export function Profile() {
       )}
       <label>Nova senha (deixe em branco para manter)<input type="password" minLength={6} value={f.senha} onChange={(e) => set('senha', e.target.value)} /></label>
       <button className="btn" disabled={busy}>{busy ? 'Salvando…' : 'Salvar alterações'}</button>
+
+      <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
+        <button
+          type="button"
+          className="btn"
+          disabled={busy}
+          onClick={handleDeleteAccount}
+          style={{ backgroundColor: '#dc2626', color: '#ffffff', width: '100%' }}
+        >
+          Excluir minha conta
+        </button>
+      </div>
     </form>
   );
 }
